@@ -37,4 +37,5 @@ tzdata==2024.1
 ultralytics==8.2.82
 ultralytics-thop==2.0.5
 urllib3==2.2.2
+websocket-client==1.8.0
 websockets==13.0
