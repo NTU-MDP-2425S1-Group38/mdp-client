@@ -5,6 +5,8 @@ Main running script to subscribe to the RPI.
 import argparse
 from multiprocessing import Process
 from typing import List
+
+from modules.observer.observer import Observer
 from modules.slave.slave import Slave
 
 
@@ -16,6 +18,16 @@ def entry_slave(url:str) -> None:
     """
     slave = Slave(url)
     slave.run()
+
+
+def entry_observe(url:str) -> None:
+    """
+    Target for new process to observe the logs from the rpi
+    :url str: Base URL for sockets to connect to
+    :return:
+    """
+    observer = Observer(url)
+    observer.run()
 
 
 def main():
@@ -38,6 +50,9 @@ def main():
 
     if args.slave:
         processes.append(Process(target=entry_slave, args=(args.url,)))
+
+    if args.observe:
+        processes.append(Process(target=entry_observe, args=(args.url,)))
 
     for p in processes:
         p.start()
