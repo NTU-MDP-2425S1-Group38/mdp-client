@@ -1,0 +1,22 @@
+
+
+### Ignore IDEs
+.idea/
+.vs-code/
+
+### Ignore virtual envs
+.venv/
+venv/
+
+### Ignore environment files
+*.env.*
+*.env
+!*.env.sample
+
+### Ignore pycache files
+__pycahce__/
+*.pyc
+*.pyc.*
+
+### DO NOT ignore markdown files
+!**/*.md
