@@ -9,4 +9,5 @@ class Observer:
         self.ws.connect(f"{self.url}/ws/observe")
 
     def run(self):
-        pass
+        while True:
+            print(self.ws.recv())

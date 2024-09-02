@@ -1,6 +1,9 @@
 import time
 import websocket
 
+from modules.slave.algo.algo import Algo
+from modules.slave.cv.cv import CV
+
 
 class Slave:
     """
@@ -11,6 +14,8 @@ class Slave:
         self.url = url
         self.ws = websocket.WebSocket()
         self.ws.connect(f"{url}/ws/connect")
+        self.cv = CV()
+        self.algo = Algo()
 
 
     def run(self) -> None:
