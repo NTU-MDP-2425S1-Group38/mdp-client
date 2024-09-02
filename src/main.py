@@ -7,6 +7,7 @@ from multiprocessing import Process
 from typing import List
 
 from modules.observer.observer import Observer
+from modules.slave.cv.cv import CV
 from modules.slave.slave import Slave
 
 
@@ -46,6 +47,9 @@ def main():
 
     args = parser.parse_args()
 
+    if not (args.slave or args.observe):
+        parser.error("At least --slave or --observe must be passed in!")
+
     processes: List[Process] = []
 
     if args.slave:
@@ -63,4 +67,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+
+    import cv2
+    cv = CV("best_v8i.onnx")
+    cap = cv2.VideoCapture(0)
+    while True:
+        ret, frame = cap.read()
+        cv.predict(frame)
+
