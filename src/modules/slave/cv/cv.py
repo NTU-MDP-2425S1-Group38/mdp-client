@@ -1,3 +1,5 @@
+import logging
+from tabnanny import verbose
 from typing import List
 
 import numpy as np
@@ -11,15 +13,13 @@ from utils.cv.determine_model_abs_path import determine_model_abs_path
 
 class CV:
 
-    @staticmethod
-    def __determine_best_device() -> str:
+    logger = logging.getLogger("CV")
+
+    def __determine_best_device(self) -> str:
         if torch.cuda.is_available():
-            print("CUDA Detected!")
+            self.logger.info("Using Cuda for inference!")
             return "cuda:0"
-        if torch.backends.mps.is_available():
-            print("MPS Detected!")
-            return "mps"
-        print("Using CPU for inference!")
+        self.logger.info("Using CPU for inference!")
         return "cpu"
 
     def __init__(self, name:str):
@@ -27,7 +27,7 @@ class CV:
         self.model = YOLO(determine_model_abs_path(name), task="segment")
 
     def predict(self, image: np.array, show:bool = False) -> List[Results]:
-        return self.model.predict(image, device=self.device, show=show)
+        return self.model.predict(image, device=self.device, show=show, verbose=False)
 
     def decode_predict(self, image_str: str, show:bool = False) -> List[Results]:
         """
