@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, field_validator, ValidationError
 from models.algo.end_position import EndPosition
 
 
+# Enum for movement directions
 class MoveDirection(str, Enum):
     Forward = "FORWARD"
     ForwardRight = "FORWARD_RIGHT"
@@ -15,9 +16,10 @@ class MoveDirection(str, Enum):
     BackwardLeft = "BACKWARD_LEFT"
 
 
+# Model for move instructions with an amount (for moves like FORWARD, BACKWARD)
 class MoveInstruction(BaseModel):
     move: MoveDirection
-    amount: float
+    amount: float = Field(default=0.0)
 
 
 class CommandInstruction(str, Enum):
@@ -28,17 +30,20 @@ class CommandInstruction(str, Enum):
 class Command(BaseModel):
     cat:str = Field(default="control")
     end_position: EndPosition
-    value: Union[CommandInstruction, MoveInstruction]
+    value: Union[CommandInstruction, MoveInstruction, MoveDirection]
 
     @classmethod
-    @field_validator("value", mode="before")
-    def validate_value(cls, value, values):
-        if isinstance(value, dict) and "move" in value:
-            # If it's a MoveInstruction, validate it accordingly
-            return MoveInstruction(**value)
-        elif isinstance(value, str):
-            # If it's a CommandInstruction, validate it as a string Enum
-            if value in CommandInstruction.__members__.values():
-                return CommandInstruction(value)
+    @field_validator('value', mode='before')
+    def validate_value(cls, v):
+        if isinstance(v, str):
+            # Ensure it's a valid CommandInstruction
+            if v in CommandInstruction.__members__.values():
+                return CommandInstruction(v)
+            else:
+                raise ValueError(f"Invalid command instruction: {v}")
+        elif isinstance(v, dict):
+            # If it's a dict, assume it's a MoveInstruction
+            return MoveInstruction(**v)
         else:
-            raise ValidationError("Invalid value for 'value' field!")
+            raise ValueError(f"Invalid value type: {type(v)}")
+

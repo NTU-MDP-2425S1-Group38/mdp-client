@@ -8,6 +8,7 @@ from models.slave.slave_work_request_type import SlaveWorkRequestType
 
 
 class SlaveWorkRequest(BaseModel):
+    id:str
     type: SlaveWorkRequestType
     payload: Union[SlaveWorkRequestPayloadAlgo, SlaveWorkRequestPayloadImageRecognition]
 
