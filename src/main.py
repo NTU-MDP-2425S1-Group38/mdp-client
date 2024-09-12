@@ -77,31 +77,31 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-
-    import cv2
-    cv = CV("best_v8i.onnx")
-    cap = cv2.VideoCapture(0)
-    while True:
-        ret, frame = cap.read()
-        res = cv.predict(frame, show=False)
-
-        # print(res[0])
-        # res[0].show()
-
-        for result in res:
-            # Get confidence scores and class indices
-            confidences = result.boxes.conf
-            class_indices = result.boxes.cls
-
-            if len(confidences) > 0:
-                # Find the index of the highest confidence score
-                max_conf_index = confidences.argmax()
-
-                # Get the corresponding class label
-                highest_confidence_label = cv.model.names[int(class_indices[max_conf_index])]
-                highest_confidence = confidences[max_conf_index]
-
-                print(f'Label: {highest_confidence_label}, Confidence: {highest_confidence}')
-            else:
-                print('No detections found.')
+    main()
+    #
+    # import cv2
+    # cv = CV("best_v8i.onnx")
+    # cap = cv2.VideoCapture(0)
+    # while True:
+    #     ret, frame = cap.read()
+    #     res = cv.predict(frame, show=False)
+    #
+    #     # print(res[0])
+    #     # res[0].show()
+    #
+    #     for result in res:
+    #         # Get confidence scores and class indices
+    #         confidences = result.boxes.conf
+    #         class_indices = result.boxes.cls
+    #
+    #         if len(confidences) > 0:
+    #             # Find the index of the highest confidence score
+    #             max_conf_index = confidences.argmax()
+    #
+    #             # Get the corresponding class label
+    #             highest_confidence_label = cv.model.names[int(class_indices[max_conf_index])]
+    #             highest_confidence = confidences[max_conf_index]
+    #
+    #             print(f'Label: {highest_confidence_label}, Confidence: {highest_confidence}')
+    #         else:
+    #             print('No detections found.')

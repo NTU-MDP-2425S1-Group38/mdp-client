@@ -1,7 +1,7 @@
+import io
 import logging
-from tabnanny import verbose
 from typing import List
-
+from PIL import Image
 import numpy as np
 import cv2
 import base64
@@ -26,7 +26,7 @@ class CV:
         self.device = self.__determine_best_device()
         self.model = YOLO(determine_model_abs_path(name), task="segment")
 
-    def predict(self, image: np.array, show:bool = False) -> List[Results]:
+    def predict(self, image: Image, show:bool = False) -> List[Results]:
         return self.model.predict(image, device=self.device, show=show, verbose=False)
 
     def decode_predict(self, image_str: str, show:bool = False) -> List[Results]:
@@ -39,11 +39,17 @@ class CV:
         :return:
         """
 
-        # Decode Image to numpy array
-        image = np.frombuffer(base64.b64decode(image_str))
+        # Decode the Base64 string into bytes
+        image_bytes = base64.b64decode(image_str)
+
+        # Load the bytes into a BytesIO buffer
+        buffer = io.BytesIO(image_bytes)
+
+        # Open the buffer as a Pillow Image
+        decoded_image = Image.open(buffer)
 
         # Predict Image
-        return self.predict(image, show=show)
+        return self.predict(decoded_image, show=show)
 
 
 

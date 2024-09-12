@@ -4,4 +4,5 @@ from models.cv.obstacle_label import ObstacleLabel
 
 
 class CvResponse(BaseModel):
+    id: Optional[str]
     label: Optional[ObstacleLabel]
