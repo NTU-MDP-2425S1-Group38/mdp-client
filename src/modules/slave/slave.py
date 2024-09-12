@@ -60,7 +60,7 @@ class Slave:
 
         while True:
             raw_request = self.ws.recv()
-            print(raw_request)
+            print("Received request!")
             request = SlaveWorkRequest.model_validate(json.loads(raw_request))
             # self.ws.send_text("this will fail")
 
