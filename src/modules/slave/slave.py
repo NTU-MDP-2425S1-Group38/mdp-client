@@ -24,11 +24,11 @@ class Slave:
 
     logger = logging.getLogger("Slave")
 
-    def __init__(self, url:str):
+    def __init__(self, url:str, model_name:str):
         self.logger.info("Starting slave!")
         self.url = url
         self.ws = websocket.WebSocket()
-        self.cv = CV("best_v8i.onnx")
+        self.cv = CV(model_name)
         self.algo = Algo()
 
     def _handle_algo(self, payload: SlaveWorkRequestPayloadAlgo, req_id: str) -> AlgoResponse:
@@ -44,8 +44,25 @@ class Slave:
         print("Received image request!")
         res = self.cv.decode_predict(payload.image)
 
-        res[0].show()
-        print(res)
+        for result in res:
+            # Get confidence scores and class indices
+            result.show()
+            confidences = result.boxes.conf
+            class_indices = result.boxes.cls
+
+            if len(confidences) > 0:
+                # Find the index of the highest confidence score
+                max_conf_index = confidences.argmax()
+
+                # Get the corresponding class label
+                highest_confidence_label = self.cv.model.names[int(class_indices[max_conf_index])]
+                highest_confidence = confidences[max_conf_index]
+
+                print(f'Label: {ObstacleLabel(highest_confidence_label)}, Confidence: {highest_confidence}')
+                return CvResponse(label=ObstacleLabel(highest_confidence_label), id=req_id)
+
+            else:
+                print('No detections found.')
 
         return CvResponse(label=ObstacleLabel.Unknown, id=req_id)
 
@@ -73,3 +90,4 @@ class Slave:
                 # Do CV stuff
                 res = self._handle_cv(request.payload, request.id)
                 self.ws.send_text(res.model_dump_json())
+

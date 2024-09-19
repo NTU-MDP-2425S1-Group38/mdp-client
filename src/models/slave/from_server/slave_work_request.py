@@ -24,6 +24,5 @@ class SlaveWorkRequest(BaseModel):
             return SlaveWorkRequestPayloadImageRecognition(**value)
 
         # Check if type is missing or not provided
-        print("HERE!")
         raise ValidationError(f"'Type' not defined in request: {request_type}")
 
