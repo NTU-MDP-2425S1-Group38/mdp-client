@@ -20,3 +20,4 @@ __pycahce__/
 
 ### DO NOT ignore markdown files
 !**/*.md
+src/files/best_v11i_m.onnx
