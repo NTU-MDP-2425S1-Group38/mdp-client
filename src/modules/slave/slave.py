@@ -1,9 +1,11 @@
 import json
 import logging
 import os
+from typing import List
+from ultralytics.engine.results import Results
 import websocket
 import requests
-
+import numpy as np
 from models.algo.algo_req import AlgoRequest
 from models.algo.algo_res import AlgoResponse
 from models.algo.command import Command
@@ -15,6 +17,7 @@ from models.slave.from_server.slave_work_request_payload_img_rec import SlaveWor
 from models.slave.slave_work_request_type import SlaveWorkRequestType
 from modules.slave.algo.algo import Algo
 from modules.slave.cv.cv import CV
+from PIL import Image
 
 
 class Slave:
@@ -30,6 +33,34 @@ class Slave:
         self.ws = websocket.WebSocket()
         self.cv = CV(model_name)
         self.algo = Algo()
+
+        # Images to stitch
+        self.results: List[Results] = []
+
+    def _stitch_images_and_show(self) -> None:
+
+        max_height:int = 0
+        total_width:int = 0
+        images:List[Image] = []
+
+        # Iterate over results
+        for r in self.results:
+            cur_image = Image.fromarray(r.plot())
+            images.append(cur_image)
+
+            max_height = max(max_height, cur_image.height)
+            total_width += cur_image.width
+
+        # Construct new image
+        stitched = Image.new('RGB', (total_width, max_height))
+        cur_width = 0
+        for i in images:
+            stitched.paste(i, (cur_width, 0))
+            cur_width += i.width
+
+        stitched.show("Stitched Images")
+
+
 
     def _handle_algo(self, payload: SlaveWorkRequestPayloadAlgo, req_id: str) -> AlgoResponse:
         self.logger.info(f"Algo: Received payload! {payload}")
@@ -47,6 +78,10 @@ class Slave:
         for result in res:
             # Get confidence scores and class indices
             result.show()
+
+            # Append to images to stitch
+            self.results.append(result)
+
             confidences = result.boxes.conf
             class_indices = result.boxes.cls
 
@@ -63,6 +98,8 @@ class Slave:
 
             else:
                 print('No detections found.')
+
+        self._stitch_images_and_show()
 
         return CvResponse(label=ObstacleLabel.Unknown, id=req_id)
 
