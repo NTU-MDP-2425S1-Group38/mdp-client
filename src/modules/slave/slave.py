@@ -1,3 +1,5 @@
+import base64
+import io
 import json
 import logging
 import os
@@ -37,6 +39,16 @@ class Slave:
         # Images to stitch
         self.results: List[Results] = []
 
+    def _decode_image(self, image_str:str) -> Image:
+        # Decode the Base64 string into bytes
+        image_bytes = base64.b64decode(image_str)
+
+        # Load the bytes into a BytesIO buffer
+        buffer = io.BytesIO(image_bytes)
+
+        # Open the buffer as a Pillow Image
+        return Image.open(buffer)
+
     def _stitch_images_and_show(self) -> None:
 
         max_height:int = 0
@@ -73,9 +85,11 @@ class Slave:
 
     def _handle_cv(self, payload: SlaveWorkRequestPayloadImageRecognition, req_id: str) -> CvResponse:
         print("Received image request!")
-        res = self.cv.decode_predict(payload.image)
+        img = self._decode_image(payload.image)
 
-        for result in res:
+        res = self.cv.predict(img)
+
+        for result in [res[0]]:
             # Get confidence scores and class indices
             result.show()
 
@@ -85,23 +99,31 @@ class Slave:
             confidences = result.boxes.conf
             class_indices = result.boxes.cls
 
-            if len(confidences) > 0:
-                # Find the index of the highest confidence score
-                max_conf_index = confidences.argmax()
+            highest_confidence_label = ObstacleLabel.Unknown
+            highest_confidence = 0
+
+            for c in range(len(confidences)):
+
+                current_label = ObstacleLabel(self.cv.model.names[int(class_indices[c])])
+
+                self.logger.info(f'Label: {current_label},\t Confidence: {confidences[c]},\t Skip: {current_label == ObstacleLabel.Shape_Bullseye and payload.ignore_bullseye}')
 
                 # Get the corresponding class label
-                highest_confidence_label = self.cv.model.names[int(class_indices[max_conf_index])]
-                highest_confidence = confidences[max_conf_index]
+                if confidences[c] > highest_confidence:
+                    if current_label == ObstacleLabel.Shape_Bullseye and payload.ignore_bullseye:
+                        continue
 
-                print(f'Label: {ObstacleLabel(highest_confidence_label)}, Confidence: {highest_confidence}')
-                return CvResponse(label=ObstacleLabel(highest_confidence_label), id=req_id)
+                    highest_confidence = confidences[c]
+                    highest_confidence_label = current_label
 
-            else:
-                print('No detections found.')
+
+
+
 
         self._stitch_images_and_show()
 
-        return CvResponse(label=ObstacleLabel.Unknown, id=req_id)
+        return CvResponse(label=ObstacleLabel(highest_confidence_label), id=req_id)
+
 
 
     def run(self) -> None:
@@ -127,4 +149,5 @@ class Slave:
                 # Do CV stuff
                 res = self._handle_cv(request.payload, request.id)
                 self.ws.send_text(res.model_dump_json())
+
 
