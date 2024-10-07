@@ -64,7 +64,7 @@ class Slave:
             total_width += cur_image.width
 
         # Construct new image
-        stitched = Image.new('RGB', (total_width, max_height))
+        stitched = Image.new('BGR', (total_width, max_height))
         cur_width = 0
         for i in images:
             stitched.paste(i, (cur_width, 0))
@@ -91,7 +91,7 @@ class Slave:
 
         for result in [res[0]]:
             # Get confidence scores and class indices
-            result.show()
+            # result.show()
 
             # Append to images to stitch
             self.results.append(result)
@@ -115,10 +115,6 @@ class Slave:
 
                     highest_confidence = confidences[c]
                     highest_confidence_label = current_label
-
-
-
-
 
         self._stitch_images_and_show()
 
