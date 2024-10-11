@@ -57,14 +57,14 @@ class Slave:
 
         # Iterate over results
         for r in self.results:
-            cur_image = Image.fromarray(r.plot())
+            cur_image = Image.fromarray(r.plot()[:, :, [2, 1, 0]])
             images.append(cur_image)
 
             max_height = max(max_height, cur_image.height)
             total_width += cur_image.width
 
         # Construct new image
-        stitched = Image.new('BGR', (total_width, max_height))
+        stitched = Image.new('RGB', (total_width, max_height))
         cur_width = 0
         for i in images:
             stitched.paste(i, (cur_width, 0))
