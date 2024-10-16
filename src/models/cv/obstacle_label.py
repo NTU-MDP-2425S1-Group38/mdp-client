@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Dict
 
+import torch
+
 
 class ObstacleLabel(str, Enum):
     """
@@ -121,7 +123,7 @@ def ObstacleLabelToId(label: ObstacleLabel) -> int:
 
 def ModelClsToId(cls: int) -> int:
 
-    assert cls in _cv_cls_id_map, "Image label class not found!"
+    assert cls in _cv_cls_id_map.keys(), "Image label class not found!"
 
     return ObstacleLabelToId(
         ObstacleLabel(

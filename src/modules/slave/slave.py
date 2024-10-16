@@ -21,7 +21,7 @@ from models.slave.from_server.slave_work_request_payload_img_rec import SlaveWor
 from models.slave.slave_work_request_type import SlaveWorkRequestType
 from modules.slave.algo.algo import Algo
 from modules.slave.cv.cv import CV
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 
 class Slave:
@@ -61,12 +61,22 @@ class Slave:
         for r in arg_images:
 
             class_indices = r.boxes.cls
-
-            for i in range(len(class_indices)):
-                r.boxes.names[i] = f"ID: {ModelClsToId(r.boxes.cls[i])} | {r.boxes.names[i]}"
-
+            boxes = r.boxes.xyxy
 
             cur_image = Image.fromarray(r.plot()[:, :, [2, 1, 0]])
+            draw = ImageDraw.Draw(cur_image)
+
+            for i in range(len(class_indices)):
+                # Get the bounding box coordinates (xmin, ymin, xmax, ymax)
+                xmin, ymin, xmax, ymax = boxes[i].tolist()
+                # Draw the label at the top-left corner of the bounding box
+                text_position = (
+                    xmin, ymin - 10 if ymin > 10 else ymin + 10
+                )  # Position above the box, unless it's too close to the top
+
+                current_id = f"ID: {ModelClsToId(int(r.boxes.cls[i].item()))}"
+                draw.text(text_position, current_id, fill=(200, 0, 0), font_size=100)  # Draw white text at (xmin, ymin)
+
             images.append(cur_image)
 
             max_height = max(max_height, cur_image.height)
