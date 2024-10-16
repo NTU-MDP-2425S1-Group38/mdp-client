@@ -2,7 +2,9 @@ import base64
 import io
 import json
 import logging
+import multiprocessing
 import os
+import threading
 from typing import List
 from ultralytics.engine.results import Results
 import websocket
@@ -12,7 +14,7 @@ from models.algo.algo_req import AlgoRequest
 from models.algo.algo_res import AlgoResponse
 from models.algo.command import Command
 from models.cv.cv_res import CvResponse
-from models.cv.obstacle_label import ObstacleLabel
+from models.cv.obstacle_label import ObstacleLabel, ModelClsToId
 from models.slave.from_server.slave_work_request import SlaveWorkRequest
 from models.slave.from_server.slave_work_request_payload_algo import SlaveWorkRequestPayloadAlgo
 from models.slave.from_server.slave_work_request_payload_img_rec import SlaveWorkRequestPayloadImageRecognition
@@ -49,14 +51,21 @@ class Slave:
         # Open the buffer as a Pillow Image
         return Image.open(buffer)
 
-    def _stitch_images_and_show(self) -> None:
-
-        max_height:int = 0
-        total_width:int = 0
-        images:List[Image] = []
+    @staticmethod
+    def _fire_and_forget_stitch_images_and_show(arg_images: List[Results]):
+        max_height: int = 0
+        total_width: int = 0
+        images: List[Image] = []
 
         # Iterate over results
-        for r in self.results:
+        for r in arg_images:
+
+            class_indices = r.boxes.cls
+
+            for i in range(len(class_indices)):
+                r.boxes.names[i] = f"ID: {ModelClsToId(r.boxes.cls[i])} | {r.boxes.names[i]}"
+
+
             cur_image = Image.fromarray(r.plot()[:, :, [2, 1, 0]])
             images.append(cur_image)
 
@@ -71,6 +80,14 @@ class Slave:
             cur_width += i.width
 
         stitched.show("Stitched Images")
+
+    def _stitch_images_and_show(self) -> None:
+        # Copy results to avoid thread safety issues
+        results_copy = self.results.copy()
+        # Start the image stitching in a new thread
+        p = multiprocessing.Process(target=self._fire_and_forget_stitch_images_and_show, args=(results_copy,))
+        p.start()
+
 
 
 
@@ -145,5 +162,6 @@ class Slave:
                 # Do CV stuff
                 res = self._handle_cv(request.payload, request.id)
                 self.ws.send_text(res.model_dump_json())
+
 
 
